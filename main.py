@@ -1,4 +1,5 @@
 from enum import Enum
+from search import bfs, dfs, a_star, greedy_bfs, beam
 
 # Constants
 SCREEN_SIZE = 10000
