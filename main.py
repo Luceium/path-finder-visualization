@@ -1,6 +1,8 @@
 from enum import Enum
-from search import bfs, dfs, a_star, greedy_bfs, beam, GridState
+from search import bfs, dfs, a_star, greedy_bfs, beam, GridState, SearchManager
 import pygame
+import pygame_widgets
+from pygame_widgets.dropdown import Dropdown
 
 # Constants
 SCREEN_SIZE = 1000
@@ -31,32 +33,6 @@ class Algorithm(Enum):
 
 
 # Path Finding Visualizer
-
-#TODO: Set up pygame
-pygame.init()
-screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
-clock = pygame.time.Clock()
-running = True
-
-while running:
-    # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    # fill the screen with a color to wipe away anything from last frame
-    screen.fill("white")
-
-    # RENDER YOUR GAME HERE
-
-    # flip() the display to put your work on screen
-    pygame.display.flip() 
-
-    clock.tick(2)
-
-pygame.quit()
-
 #TODO: Build Grid
 def grid(state : list[list[int]]):
     for row in range(GRID_SIZE):
@@ -77,4 +53,47 @@ def grid(state : list[list[int]]):
                     pygame.draw.rect(screen, BLUE, rect)
             pygame.draw.rect(screen, (0, 0, 0), rect, 1)  # Grid line
 
-#TODO: Build UI
+# Set up pygame
+pygame.init()
+screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
+clock = pygame.time.Clock()
+running = True
+
+# Set up search manager (manages grid and algorithms state)
+searchManager = SearchManager()
+
+# Set up UI
+algo_dropdown = Dropdown(
+    screen, 10, 10, 100, 50, name="Algorithms",
+    choices=[algo.name for algo in Algorithm],
+    values=[algo.value[1] for algo in Algorithm],
+    borderRadius=5
+)
+edit_mode_dropdown = Dropdown(
+    screen, 120, 10, 100, 50, name="Edit Mode",
+    choices=[mode.name for mode in EditMode],
+    borderRadius=5
+)
+
+while running:
+    # poll for events
+    # pygame.QUIT event means the user clicked X to close your window
+    events = pygame.event.get()
+    for event in events:
+        if event.type == pygame.QUIT:
+            running = False
+
+    # fill the screen with a color to wipe away anything from last frame
+    screen.fill("white")
+
+    # RENDER YOUR GAME HERE
+    grid(searchManager.grid)
+
+    pygame_widgets.update(events)
+
+    # flip() the display to put your work on screen
+    pygame.display.update() 
+
+    # clock.tick(2)
+
+pygame.quit()

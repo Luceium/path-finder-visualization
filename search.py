@@ -52,9 +52,9 @@ class GridState(Enum):
 
 class SearchManager:
     def __init__(self, _defaultImpl=bfs, _size=10, _beam_size=3):
-        impl = _defaultImpl
-        size = _size
-        grid = [[GridState.UNEXPLORED for _ in range(self.size)] for _ in range(self.size)]
+        self.impl = _defaultImpl
+        self.size = _size
+        self.grid = [[GridState.UNEXPLORED for _ in range(self.size)] for _ in range(self.size)]
 
         # BFS
         bfs_queue = []
@@ -66,6 +66,9 @@ class SearchManager:
         greedy_bfs_queue = []
         # Beam
         beam_size = _beam_size
+    
+    def reset_grid(self):
+        self.grid = [[GridState.UNEXPLORED for _ in range(self.size)] for _ in range(self.size)]
 
     def step(self):
         if self.impl == beam:
