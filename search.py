@@ -51,11 +51,10 @@ class GridState(Enum):
     CURRENT = auto()
 
 class SearchManager:
-    def __init__(self, _defaultImpl=bfs, _width=10, _height=10, _beam_size=3):
+    def __init__(self, _defaultImpl=bfs, _size=10, _beam_size=3):
         impl = _defaultImpl
-        width = _width
-        height = _height
-        grid = [[GridState.UNEXPLORED for _ in range(self.width)] for _ in range(self.height)]
+        size = _size
+        grid = [[GridState.UNEXPLORED for _ in range(self.size)] for _ in range(self.size)]
 
         # BFS
         bfs_queue = []

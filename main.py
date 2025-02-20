@@ -1,5 +1,5 @@
 from enum import Enum
-from search import bfs, dfs, a_star, greedy_bfs, beam
+from search import bfs, dfs, a_star, greedy_bfs, beam, GridState
 import pygame
 
 # Constants
@@ -53,9 +53,28 @@ while running:
     # flip() the display to put your work on screen
     pygame.display.flip() 
 
-    clock.tick(30)
+    clock.tick(2)
 
 pygame.quit()
 
 #TODO: Build Grid
+def grid(state : list[list[int]]):
+    for row in range(GRID_SIZE):
+        for col in range(GRID_SIZE):
+            rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+            match state[row][col]:
+                case GridState.UNEXPLORED:
+                    pygame.draw.rect(screen, WHITE, rect)
+                case GridState.SEEN:
+                    pygame.draw.rect(screen, GREY, rect)
+                case GridState.OBSTACLE:
+                    pygame.draw.rect(screen, BLACK, rect)
+                case GridState.START:
+                    pygame.draw.rect(screen, GREEN, rect)
+                case GridState.GOAL:
+                    pygame.draw.rect(screen, YELLOW, rect)
+                case GridState.CURRENT:
+                    pygame.draw.rect(screen, BLUE, rect)
+            pygame.draw.rect(screen, (0, 0, 0), rect, 1)  # Grid line
+
 #TODO: Build UI
