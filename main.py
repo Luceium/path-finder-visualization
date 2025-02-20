@@ -3,12 +3,18 @@ from search import bfs, dfs, a_star, greedy_bfs, beam, GridState, SearchManager
 import pygame
 import pygame_widgets
 from pygame_widgets.dropdown import Dropdown
+from pygame_widgets.button import ButtonArray
+
+# TODO
+# - handle clicks on squares
+# - change grid state
+# - implement search algos
+# - add buttons (as  button array widget) for play, reset, and next step
 
 # Constants
 SCREEN_SIZE = 1000
 GRID_SIZE = 10
 CELL_SIZE = SCREEN_SIZE // GRID_SIZE
-FPS = 30
 WHITE = (255, 255, 255) # unvisited
 BLACK = (0, 0, 0)       # obstacles
 GREEN = (0, 255, 0)     # start
@@ -30,10 +36,6 @@ class Algorithm(Enum):
     GREEDY_BFS = ("Greedy Best First Search", greedy_bfs)
     BEAM = ("Beam Search", beam)
 
-
-
-# Path Finding Visualizer
-#TODO: Build Grid
 def grid(state : list[list[int]]):
     for row in range(GRID_SIZE):
         for col in range(GRID_SIZE):
@@ -73,6 +75,16 @@ edit_mode_dropdown = Dropdown(
     screen, 120, 10, 100, 50, name="Edit Mode",
     choices=[mode.name for mode in EditMode],
     borderRadius=5
+)
+simulation_control_buttons = ButtonArray(
+    screen, 230, 10, 200, 50, (4,1), border=0,
+    texts=('play', 'pause', 'next', 'reset'),
+    onClicks=(
+        lambda: print("TODO"),
+        lambda: print("TODO"),
+        lambda: print("TODO"),
+        lambda: print("TODO")
+    )
 )
 
 while running:
