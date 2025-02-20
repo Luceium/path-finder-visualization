@@ -1,8 +1,9 @@
 from enum import Enum
 from search import bfs, dfs, a_star, greedy_bfs, beam
+import pygame
 
 # Constants
-SCREEN_SIZE = 10000
+SCREEN_SIZE = 1000
 GRID_SIZE = 10
 CELL_SIZE = SCREEN_SIZE // GRID_SIZE
 FPS = 30
@@ -32,5 +33,29 @@ class Algorithm(Enum):
 # Path Finding Visualizer
 
 #TODO: Set up pygame
+pygame.init()
+screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
+clock = pygame.time.Clock()
+running = True
+
+while running:
+    # poll for events
+    # pygame.QUIT event means the user clicked X to close your window
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # fill the screen with a color to wipe away anything from last frame
+    screen.fill("white")
+
+    # RENDER YOUR GAME HERE
+
+    # flip() the display to put your work on screen
+    pygame.display.flip() 
+
+    clock.tick(30)
+
+pygame.quit()
+
 #TODO: Build Grid
 #TODO: Build UI
