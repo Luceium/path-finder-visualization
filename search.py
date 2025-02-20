@@ -57,15 +57,19 @@ class SearchManager:
         self.grid = [[GridState.UNEXPLORED for _ in range(self.size)] for _ in range(self.size)]
 
         # BFS
-        bfs_queue = []
+        self.bfs_queue = []
         # DFS
-        dfs_stack = []
+        self.dfs_stack = []
         # A*
-        a_star_queue = []
+        self.a_star_queue = []
         # Greedy BFS
-        greedy_bfs_queue = []
+        self.greedy_bfs_queue = []
         # Beam
-        beam_size = _beam_size
+        self.beam_size = _beam_size
+
+        self.goal_pos = None
+        self.start_pos = None
+        self.path_started = False
     
     def reset_grid(self):
         self.grid = [[GridState.UNEXPLORED for _ in range(self.size)] for _ in range(self.size)]
@@ -78,7 +82,25 @@ class SearchManager:
 
     def reset(self):
         # reset all state vars
-        pass
+        self.reset_grid()
+        self.path_started = False
+
+    def set_goal(self, goal: tuple[int, int]):
+        if self.goal_pos is not None:
+            old_x, old_y = self.goal_pos
+            self.grid[old_x][old_y] = GridState.UNEXPLORED
+        self.goal_pos = goal
+        self.grid[goal[0]][goal[1]] = GridState.GOAL
+
+    def set_start(self, start: tuple[int, int]):
+        # reset if anything has been explored
+        if self.path_started:
+            self.reset()
+        if self.start_pos is not None:
+            old_x, old_y = self.start_pos
+            self.grid[old_x][old_y] = GridState.UNEXPLORED
+        self.start_pos = start
+        self.grid[start[0]][start[1]] = GridState.START
     
     def changeImpl(self, newImpl):
         self.impl = newImpl

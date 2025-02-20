@@ -36,7 +36,7 @@ class Algorithm(Enum):
     GREEDY_BFS = ("Greedy Best First Search", greedy_bfs)
     BEAM = ("Beam Search", beam)
 
-def grid(state : list[list[int]]):
+def grid(state : list[list[GridState]]):
     for row in range(GRID_SIZE):
         for col in range(GRID_SIZE):
             rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
@@ -54,11 +54,15 @@ def grid(state : list[list[int]]):
                 case GridState.CURRENT:
                     pygame.draw.rect(screen, BLUE, rect)
             pygame.draw.rect(screen, (0, 0, 0), rect, 1)  # Grid line
+        # print grid state for debugging
+        # for row in state:
+        #     print(row)
+        # print()
 
 # Set up pygame
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_SIZE, SCREEN_SIZE))
-clock = pygame.time.Clock()
+pygame.display.set_caption("Interactable Pathfinding Visualizer")
 running = True
 
 # Set up search manager (manages grid and algorithms state)
@@ -74,6 +78,7 @@ algo_dropdown = Dropdown(
 edit_mode_dropdown = Dropdown(
     screen, 120, 10, 100, 50, name="Edit Mode",
     choices=[mode.name for mode in EditMode],
+    values=[mode for mode in EditMode],
     borderRadius=5
 )
 simulation_control_buttons = ButtonArray(
@@ -87,13 +92,39 @@ simulation_control_buttons = ButtonArray(
     )
 )
 
+def pos_on_button(pos):
+    dropdown_open = algo_dropdown.isDropped() or edit_mode_dropdown.isDropped()
+    y_in_range = 10 <= pos[1] <= 60
+    x_in_range = 10 <= pos[0] <= 110 or 120 <= pos[0] <= 220 or 230 <= pos[0] <= 430
+    # print(f"dropdown open?: {dropdown_open}")
+    # print(f"is Y in range? : {10 <= pos[1] <= 60}")
+    # print(f"is X in range? : {10 <= pos[0] <= 110} or {120 <= pos[0] <= 220} or {230 <= pos[0] <= 430}")
+    # print(f"are both in range?: {(10 <= pos[1] <= 60) and ((10 <= pos[0] <= 110) or (120 <= pos[0] <= 220) or (230 <= pos[0] <= 430))}")
+    return dropdown_open or (y_in_range and x_in_range)
+
 while running:
     # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
     events = pygame.event.get()
     for event in events:
+        # pygame.QUIT event means the user clicked X to close your window
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            pos = pygame.mouse.get_pos()
+
+            if not pos_on_button(pos):
+                row, col = pos[1] // CELL_SIZE, pos[0] // CELL_SIZE
+                edit_choice = edit_mode_dropdown.getSelected()
+                match edit_choice:
+                    case EditMode.START:
+                        searchManager.set_start((row, col))
+                    case EditMode.GOAL:
+                        if searchManager.grid[row][col] == GridState.UNEXPLORED:
+                            searchManager.set_goal((row, col))
+                    case EditMode.OBSTACLES:
+                        print(searchManager.grid[row][col], searchManager.grid[row][col] == GridState.UNEXPLORED)
+                        if searchManager.grid[row][col] == GridState.UNEXPLORED:
+                            searchManager.grid[row][col] = GridState.OBSTACLE
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("white")
