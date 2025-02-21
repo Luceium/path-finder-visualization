@@ -4,6 +4,7 @@ import pygame
 import pygame_widgets
 from pygame_widgets.dropdown import Dropdown
 from pygame_widgets.button import ButtonArray
+import threading
 
 # TODO
 # - handle clicks on squares
@@ -67,11 +68,19 @@ edit_mode_dropdown = Dropdown(
     values=[mode for mode in EditMode],
     borderRadius=5
 )
+
+def play_search():
+    def run_search():
+        while running:
+            searchManager.search(algo_dropdown.getSelected())
+            pygame.time.wait(500)
+    threading.Thread(target=run_search).start()
+
 simulation_control_buttons = ButtonArray(
     screen, 230, 10, 200, 50, (4,1), border=0,
     texts=('play', 'pause', 'next', 'reset'),
     onClicks=(
-        lambda: print("TODO"),
+        lambda: play_search(),
         lambda: print("TODO"),
         lambda: searchManager.search(algo_dropdown.getSelected()),
         lambda: print("TODO")
