@@ -65,16 +65,18 @@ edit_mode_dropdown = Dropdown(
 
 play_thread = None
 pause_event = threading.Event()
+end_event = threading.Event()
 
 def play_search():
     global play_thread
     if play_thread is None or not play_thread.is_alive():
+        end_event.clear()
         pause_event.clear()
         play_thread = threading.Thread(target=run_search)
         play_thread.start()
 
 def run_search():
-    while running:
+    while not end_event.is_set() and not searchManager.finished:
         if not pause_event.is_set():
             searchManager.search(algo_dropdown.getSelected())
             pygame.time.wait(500)
@@ -85,6 +87,14 @@ def toggle_pause():
     else:
         pause_event.set()
 
+def reset():
+    global play_thread
+    if play_thread is not None:
+        end_event.set()
+        play_thread.join()
+        play_thread = None
+    searchManager.reset()
+
 simulation_control_buttons = ButtonArray(
     screen, 230, 10, 200, 50, (4,1), border=0,
     texts=('play', 'pause', 'next', 'reset'),
@@ -92,7 +102,7 @@ simulation_control_buttons = ButtonArray(
         lambda: play_search(),
         lambda: toggle_pause(),
         lambda: searchManager.search(algo_dropdown.getSelected()),
-        lambda: print("TODO")
+        lambda: reset()
     )
 )
 
