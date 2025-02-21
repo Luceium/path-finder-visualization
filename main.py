@@ -1,5 +1,5 @@
-from enum import Enum
-from search import bfs, dfs, a_star, greedy_bfs, beam, GridState, SearchManager
+from search import SearchManager
+from enums import GridState, EditMode, Algorithm
 import pygame
 import pygame_widgets
 from pygame_widgets.dropdown import Dropdown
@@ -21,20 +21,6 @@ GREEN = (0, 255, 0)     # start
 YELLOW = (255, 255, 0)  # goal
 GREY = (169, 169, 169)  # explored
 BLUE = (0, 0, 255)      # last visited cell
-
-# UI options
-class EditMode(Enum):
-    START = 'Edit Start'
-    GOAL = 'Edit Goal'
-    OBSTACLES = 'Edit Obstacles'
-
-class Algorithm(Enum):
-    #NOTE: Switching the algorithm resets the search
-    BFS = ("Breadth First Search", bfs)
-    DFS = ("Depth First Search", dfs)
-    A_STAR = ("A*", a_star)
-    GREEDY_BFS = ("Greedy Best First Search", greedy_bfs)
-    BEAM = ("Beam Search", beam)
 
 def grid(state : list[list[GridState]]):
     for row in range(GRID_SIZE):
@@ -71,8 +57,8 @@ searchManager = SearchManager()
 # Set up UI
 algo_dropdown = Dropdown(
     screen, 10, 10, 100, 50, name="Algorithms",
-    choices=[algo.name for algo in Algorithm],
-    values=[algo.value[1] for algo in Algorithm],
+    choices=[algo.value for algo in Algorithm],
+    values=[algo for algo in Algorithm],
     borderRadius=5
 )
 edit_mode_dropdown = Dropdown(
@@ -87,7 +73,7 @@ simulation_control_buttons = ButtonArray(
     onClicks=(
         lambda: print("TODO"),
         lambda: print("TODO"),
-        lambda: print("TODO"),
+        lambda: searchManager.search(algo_dropdown.getSelected()),
         lambda: print("TODO")
     )
 )
@@ -122,7 +108,7 @@ while running:
                         if searchManager.grid[row][col] == GridState.UNEXPLORED:
                             searchManager.set_goal((row, col))
                     case EditMode.OBSTACLES:
-                        print(searchManager.grid[row][col], searchManager.grid[row][col] == GridState.UNEXPLORED)
+                        # print(searchManager.grid[row][col], searchManager.grid[row][col] == GridState.UNEXPLORED)
                         if searchManager.grid[row][col] == GridState.UNEXPLORED:
                             searchManager.grid[row][col] = GridState.OBSTACLE
 
