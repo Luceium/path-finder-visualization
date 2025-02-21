@@ -11,11 +11,12 @@ class SearchManager:
         # DFS
         self.dfs_stack = []
         # A*
-        self.a_star_queue = []
+        self.a_star_queue = deque()
         # Greedy BFS
-        self.greedy_bfs_queue = []
+        self.greedy_bfs_queue = deque()
         # Beam
         self.beam_size = _beam_size
+        self.beam_queue = deque()
 
         self.goal_pos = None
         self.start_pos = None
@@ -53,6 +54,11 @@ class SearchManager:
         self.path_started = False
         self.last_explored = None
         self.finished = False
+        self.bfs_queue = deque()
+        self.greedy_bfs = deque()
+        self.dfs_stack = []
+        self.a_star_queue = deque()
+        self.beam_queue = deque()
 
 
     def set_goal(self, goal: tuple[int, int]):
