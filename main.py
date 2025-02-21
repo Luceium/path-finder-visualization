@@ -6,12 +6,6 @@ from pygame_widgets.dropdown import Dropdown
 from pygame_widgets.button import ButtonArray
 import threading
 
-# TODO
-# - handle clicks on squares
-# - change grid state
-# - implement search algos
-# - add buttons (as  button array widget) for play, reset, and next step
-
 # Constants
 SCREEN_SIZE = 1000
 GRID_SIZE = 10
@@ -69,19 +63,34 @@ edit_mode_dropdown = Dropdown(
     borderRadius=5
 )
 
+play_thread = None
+pause_event = threading.Event()
+
 def play_search():
-    def run_search():
-        while running:
+    global play_thread
+    if play_thread is None or not play_thread.is_alive():
+        pause_event.clear()
+        play_thread = threading.Thread(target=run_search)
+        play_thread.start()
+
+def run_search():
+    while running:
+        if not pause_event.is_set():
             searchManager.search(algo_dropdown.getSelected())
             pygame.time.wait(500)
-    threading.Thread(target=run_search).start()
+
+def toggle_pause():
+    if pause_event.is_set():
+        pause_event.clear()
+    else:
+        pause_event.set()
 
 simulation_control_buttons = ButtonArray(
     screen, 230, 10, 200, 50, (4,1), border=0,
     texts=('play', 'pause', 'next', 'reset'),
     onClicks=(
         lambda: play_search(),
-        lambda: print("TODO"),
+        lambda: toggle_pause(),
         lambda: searchManager.search(algo_dropdown.getSelected()),
         lambda: print("TODO")
     )
