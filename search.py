@@ -89,27 +89,10 @@ class SearchManager:
         Breadth First Search
         Searches all paths at the same time, expanding each equally.
         """
-        print("bfs entered")
         if not self.explore_next(self.bfs_queue, lambda: self.bfs_queue.popleft()):
-            print("explore next met exit condition")
             return
-        print("bfs continuing")
 
-        x, y = self.last_explored
-
-        for i,j in [(-1,0), (0,1), (1,0), (0,-1)]:
-            current_x, current_y = x + i, y + j
-            current = (current_x, current_y)
-
-            if 0 <= current_x < self.size and 0 <= current_y < self.size and (self.grid[current_x][current_y] == GridState.UNEXPLORED or self.grid[current_x][current_y] == GridState.GOAL):
-                # check if cell is in queue
-                in_queue = False
-                for cell in self.bfs_queue:
-                    if cell == current:
-                        in_queue = True
-                        break
-                if not in_queue:
-                    self.bfs_queue.append(current)
+        self.add_neighbors(self.bfs_queue, lambda current: self.bfs_queue.append(current))
 
     def dfs(self):
         """
@@ -120,21 +103,7 @@ class SearchManager:
         if not self.explore_next(self.dfs_stack, lambda: self.dfs_stack.pop()):
             return
 
-        x, y = self.last_explored
-
-        for i,j in [(-1,0), (0,1), (1,0), (0,-1)]:
-            current_x, current_y = x + i, y + j
-            current = (current_x, current_y)
-
-            if 0 <= current_x < self.size and 0 <= current_y < self.size and (self.grid[current_x][current_y] == GridState.UNEXPLORED or self.grid[current_x][current_y] == GridState.GOAL):
-                # check if cell is in queue
-                in_stack = False
-                for cell in self.dfs_stack:
-                    if cell == current:
-                        in_stack = True
-                        break
-                if not in_stack:
-                    self.dfs_stack.append(current)
+        self.add_neighbors(self.dfs_stack, lambda current: self.dfs_stack.append(current))
 
     # Informed
     def a_star(self):
@@ -153,23 +122,7 @@ class SearchManager:
         if not self.explore_next(self.greedy_bfs_queue, lambda: heapq.heappop(self.greedy_bfs_queue)[1]):
             return
         
-        x, y = self.last_explored
-
-        for i,j in [(-1,0), (0,1), (1,0), (0,-1)]:
-            current_x, current_y = x + i, y + j
-            current = (current_x, current_y)
-
-            if 0 <= current_x < self.size and 0 <= current_y < self.size and (self.grid[current_x][current_y] == GridState.UNEXPLORED or self.grid[current_x][current_y] == GridState.GOAL):
-                # check if cell is in queue
-                in_queue = False
-                for cell in self.greedy_bfs_queue:
-                    if cell == current:
-                        in_queue = True
-                        break
-                if not in_queue:
-                    heapq.heappush(self.greedy_bfs_queue, (self.heuristic(current), current))
-
-        return 4
+        self.add_neighbors(self.greedy_bfs_queue, lambda current: heapq.heappush(self.greedy_bfs_queue, (self.heuristic(current), current)))
 
     def beam(self, n):
         """
@@ -198,11 +151,28 @@ class SearchManager:
             x, y = self.last_explored
             self.grid[x][y] = GridState.CURRENT
 
-            print(self.last_explored, self.goal_pos)
             if self.last_explored == self.goal_pos:
                 print("GOAL")
                 self.finished = True
+                return False
         return True
+    
+    def add_neighbors(self, next_options, add: Callable[[tuple[int,int]], None]):
+        x, y = self.last_explored
+
+        for i,j in [(-1,0), (0,1), (1,0), (0,-1)]:
+            current_x, current_y = x + i, y + j
+            current = (current_x, current_y)
+
+            if 0 <= current_x < self.size and 0 <= current_y < self.size and (self.grid[current_x][current_y] == GridState.UNEXPLORED or self.grid[current_x][current_y] == GridState.GOAL):
+                # check if cell is in queue
+                in_next = False
+                for cell in next_options:
+                    if cell == current:
+                        in_next = True
+                        break
+                if not in_next:
+                    add(current)
 
     def heuristic(self,pos):
         cur_x, cur_y = pos
