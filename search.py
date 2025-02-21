@@ -1,5 +1,6 @@
 from enums import Algorithm, GridState
 from collections import deque
+from collections.abc import Callable
 
 class SearchManager:
     def __init__(self, _size=10, _beam_size=3):
@@ -87,28 +88,8 @@ class SearchManager:
         Breadth First Search
         Searches all paths at the same time, expanding each equally.
         """
-        if self.finished:
+        if not self.explore_next(self.bfs_queue, lambda: self.bfs_queue.popleft()):
             return
-        if not self.path_started: # Start
-            self.last_explored = self.start_pos
-            self.path_started = True
-        else:
-            # Unset last seen
-            if self.last_explored != self.start_pos:
-                x, y = self.last_explored
-                self.grid[x][y] = GridState.SEEN
-
-            # Color and set new current
-            if len(self.bfs_queue) < 1:
-                return # No solution found (May not be possible)
-            self.last_explored = self.bfs_queue.popleft()
-            x, y = self.last_explored
-            self.grid[x][y] = GridState.CURRENT
-
-            print(self.last_explored, self.goal_pos)
-            if self.last_explored == self.goal_pos:
-                print("GOAL")
-                self.finished = True
 
         x, y = self.last_explored
 
@@ -131,28 +112,8 @@ class SearchManager:
         Depth First Search
         Searches one path at a time, completely exploring a path and all it's subpaths before moving on to a new path.
         """
-        if self.finished:
+        if not self.explore_next(self.dfs_stack, lambda: self.dfs_stack.pop()):
             return
-        if not self.path_started: # Start
-            self.last_explored = self.start_pos
-            self.path_started = True
-        else:
-            # Unset last seen
-            if self.last_explored != self.start_pos:
-                x, y = self.last_explored
-                self.grid[x][y] = GridState.SEEN
-
-            # Color and set new current
-            if len(self.dfs_stack) < 1:
-                return # No solution found (May not be possible)
-            self.last_explored = self.dfs_stack.pop()
-            x, y = self.last_explored
-            self.grid[x][y] = GridState.CURRENT
-
-            print(self.last_explored, self.goal_pos)
-            if self.last_explored == self.goal_pos:
-                print("GOAL")
-                self.finished = True
 
         x, y = self.last_explored
 
@@ -162,12 +123,12 @@ class SearchManager:
 
             if 0 <= current_x < self.size and 0 <= current_y < self.size and (self.grid[current_x][current_y] == GridState.UNEXPLORED or self.grid[current_x][current_y] == GridState.GOAL):
                 # check if cell is in queue
-                in_queue = False
+                in_stack = False
                 for cell in self.dfs_stack:
                     if cell == current:
-                        in_queue = True
+                        in_stack = True
                         break
-                if not in_queue:
+                if not in_stack:
                     self.dfs_stack.append(current)
 
     # Informed
@@ -192,4 +153,30 @@ class SearchManager:
         Explores the top n nodes at each step of the search and prunes all other nodes.
         """
         return 5
+
+    # Algo Helper Functions
+    def explore_next(self, data, get_next: Callable[[], tuple[int,int]]) -> bool:
+        if self.finished:
+            return False
+        if not self.path_started: # Start
+            self.last_explored = self.start_pos
+            self.path_started = True
+        else:
+            # Unset last seen
+            if self.last_explored != self.start_pos:
+                x, y = self.last_explored
+                self.grid[x][y] = GridState.SEEN
+
+            # Color and set new current
+            if len(data) < 1:
+                return False# No solution found (May not be possible)
+            self.last_explored = get_next()
+            x, y = self.last_explored
+            self.grid[x][y] = GridState.CURRENT
+
+            print(self.last_explored, self.goal_pos)
+            if self.last_explored == self.goal_pos:
+                print("GOAL")
+                self.finished = True
+
 
