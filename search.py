@@ -158,6 +158,13 @@ class SearchManager:
                 print("GOAL")
                 self.finished = True
                 return False
+        
+        # If the user adds obstacles after a cell has been added to the
+        # data structure for next options to explore we need to skip that node.
+        x, y = self.last_explored
+        if self.grid[x][y] == GridState.OBSTACLE:
+            return self.explore_next(data, get_next)
+        
         return True
     
     def add_neighbors(self, next_options, add: Callable[[tuple[int,int]], None]):
