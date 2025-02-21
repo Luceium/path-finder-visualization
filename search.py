@@ -29,7 +29,7 @@ class SearchManager:
             case Algorithm.BFS:
                 self.bfs()
             case Algorithm.DFS:
-                pass
+                self.dfs()
             case Algorithm.GREEDY_BFS:
                 pass
             case Algorithm.A_STAR:
@@ -131,7 +131,44 @@ class SearchManager:
         Depth First Search
         Searches one path at a time, completely exploring a path and all it's subpaths before moving on to a new path.
         """
-        return 2
+        if self.finished:
+            return
+        if not self.path_started: # Start
+            self.last_explored = self.start_pos
+            self.path_started = True
+        else:
+            # Unset last seen
+            if self.last_explored != self.start_pos:
+                x, y = self.last_explored
+                self.grid[x][y] = GridState.SEEN
+
+            # Color and set new current
+            if len(self.dfs_stack) < 1:
+                return # No solution found (May not be possible)
+            self.last_explored = self.dfs_stack.pop()
+            x, y = self.last_explored
+            self.grid[x][y] = GridState.CURRENT
+
+            print(self.last_explored, self.goal_pos)
+            if self.last_explored == self.goal_pos:
+                print("GOAL")
+                self.finished = True
+
+        x, y = self.last_explored
+
+        for i,j in [(-1,0), (0,1), (1,0), (0,-1)]:
+            current_x, current_y = x + i, y + j
+            current = (current_x, current_y)
+
+            if 0 <= current_x < self.size and 0 <= current_y < self.size and (self.grid[current_x][current_y] == GridState.UNEXPLORED or self.grid[current_x][current_y] == GridState.GOAL):
+                # check if cell is in queue
+                in_queue = False
+                for cell in self.dfs_stack:
+                    if cell == current:
+                        in_queue = True
+                        break
+                if not in_queue:
+                    self.dfs_stack.append(current)
 
     # Informed
     def a_star(self):
