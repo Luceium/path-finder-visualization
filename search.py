@@ -43,7 +43,10 @@ class SearchManager:
                 pass
     
     def reset_grid(self):
-        self.grid = [[GridState.UNEXPLORED for _ in range(self.size)] for _ in range(self.size)]
+        self.grid = [[self.grid[x][y] if self.grid[x][y] != GridState.SEEN else GridState.UNEXPLORED for y in range(self.size)] for x in range(self.size)]
+        # reset state of goal incase it was reached
+        goal_x, goal_y = self.goal_pos
+        self.grid[goal_x][goal_y] = GridState.GOAL
 
     def reset(self):
         # reset all state vars

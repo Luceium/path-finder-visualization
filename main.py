@@ -110,10 +110,6 @@ def pos_on_button(pos):
     dropdown_open = algo_dropdown.isDropped() or edit_mode_dropdown.isDropped()
     y_in_range = 10 <= pos[1] <= 60
     x_in_range = 10 <= pos[0] <= 110 or 120 <= pos[0] <= 220 or 230 <= pos[0] <= 430
-    # print(f"dropdown open?: {dropdown_open}")
-    # print(f"is Y in range? : {10 <= pos[1] <= 60}")
-    # print(f"is X in range? : {10 <= pos[0] <= 110} or {120 <= pos[0] <= 220} or {230 <= pos[0] <= 430}")
-    # print(f"are both in range?: {(10 <= pos[1] <= 60) and ((10 <= pos[0] <= 110) or (120 <= pos[0] <= 220) or (230 <= pos[0] <= 430))}")
     return dropdown_open or (y_in_range and x_in_range)
 
 while running:
@@ -136,9 +132,10 @@ while running:
                         if searchManager.grid[row][col] == GridState.UNEXPLORED:
                             searchManager.set_goal((row, col))
                     case EditMode.OBSTACLES:
-                        # print(searchManager.grid[row][col], searchManager.grid[row][col] == GridState.UNEXPLORED)
                         if searchManager.grid[row][col] == GridState.UNEXPLORED:
                             searchManager.grid[row][col] = GridState.OBSTACLE
+                        elif searchManager.grid[row][col] == GridState.OBSTACLE:
+                            searchManager.grid[row][col] = GridState.UNEXPLORED
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("white")
