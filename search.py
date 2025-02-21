@@ -1,5 +1,6 @@
 from enums import Algorithm, GridState
 from collections import deque
+import heapq
 from collections.abc import Callable
 
 class SearchManager:
@@ -12,12 +13,15 @@ class SearchManager:
         # DFS
         self.dfs_stack = []
         # A*
-        self.a_star_queue = deque()
+        self.a_star_queue = []
+        heapq.heapify(self.a_star_queue)
         # Greedy BFS
-        self.greedy_bfs_queue = deque()
+        self.greedy_bfs_queue = []
+        heapq.heapify(self.greedy_bfs_queue)
         # Beam
         self.beam_size = _beam_size
-        self.beam_queue = deque()
+        self.beam_queue = []
+        heapq.heapify(self.beam_queue)
 
         self.goal_pos = None
         self.start_pos = None
@@ -32,7 +36,7 @@ class SearchManager:
             case Algorithm.DFS:
                 self.dfs()
             case Algorithm.GREEDY_BFS:
-                pass
+                self.greedy_bfs()
             case Algorithm.A_STAR:
                 pass
             case Algorithm.BEAM:
@@ -50,10 +54,13 @@ class SearchManager:
         self.last_explored = None
         self.finished = False
         self.bfs_queue = deque()
-        self.greedy_bfs = deque()
+        self.greedy_bfs_queue = []
+        heapq.heapify(self.greedy_bfs_queue)
         self.dfs_stack = []
-        self.a_star_queue = deque()
-        self.beam_queue = deque()
+        self.a_star_queue = []
+        heapq.heapify(self.a_star_queue)
+        self.beam_queue = []
+        heapq.heapify(self.beam_queue)
 
 
     def set_goal(self, goal: tuple[int, int]):
@@ -109,6 +116,7 @@ class SearchManager:
         Depth First Search
         Searches one path at a time, completely exploring a path and all it's subpaths before moving on to a new path.
         """
+        #Note - path seems a bit buggy
         if not self.explore_next(self.dfs_stack, lambda: self.dfs_stack.pop()):
             return
 
@@ -142,6 +150,25 @@ class SearchManager:
         Greedy Best First Search
         Greedily searches based on which node has the smallest heuristic cost to the goal.
         """
+        if not self.explore_next(self.greedy_bfs_queue, lambda: heapq.heappop(self.greedy_bfs_queue)[1]):
+            return
+        
+        x, y = self.last_explored
+
+        for i,j in [(-1,0), (0,1), (1,0), (0,-1)]:
+            current_x, current_y = x + i, y + j
+            current = (current_x, current_y)
+
+            if 0 <= current_x < self.size and 0 <= current_y < self.size and (self.grid[current_x][current_y] == GridState.UNEXPLORED or self.grid[current_x][current_y] == GridState.GOAL):
+                # check if cell is in queue
+                in_queue = False
+                for cell in self.greedy_bfs_queue:
+                    if cell == current:
+                        in_queue = True
+                        break
+                if not in_queue:
+                    heapq.heappush(self.greedy_bfs_queue, (self.heuristic(current), current))
+
         return 4
 
     def beam(self, n):
@@ -176,5 +203,10 @@ class SearchManager:
                 print("GOAL")
                 self.finished = True
         return True
+
+    def heuristic(self,pos):
+        cur_x, cur_y = pos
+        goal_x, goal_y = self.goal_pos
+        return ((goal_x-cur_x)**2+(goal_y-cur_y)**2)**0.5
 
 
