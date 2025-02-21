@@ -41,12 +41,6 @@ class SearchManager:
     def reset_grid(self):
         self.grid = [[GridState.UNEXPLORED for _ in range(self.size)] for _ in range(self.size)]
 
-    def step(self):
-        if self.impl == beam:
-            self.impl(self.beam_size)
-        else:
-            self.impl()
-
     def reset(self):
         # reset all state vars
         self.reset_grid()
@@ -88,8 +82,11 @@ class SearchManager:
         Breadth First Search
         Searches all paths at the same time, expanding each equally.
         """
+        print("bfs entered")
         if not self.explore_next(self.bfs_queue, lambda: self.bfs_queue.popleft()):
+            print("explore next met exit condition")
             return
+        print("bfs continuing")
 
         x, y = self.last_explored
 
@@ -178,5 +175,6 @@ class SearchManager:
             if self.last_explored == self.goal_pos:
                 print("GOAL")
                 self.finished = True
+        return True
 
 
