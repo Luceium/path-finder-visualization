@@ -99,10 +99,10 @@ simulation_control_buttons = ButtonArray(
     screen, 230, 10, 200, 50, (4,1), border=0,
     texts=('play', 'pause', 'next', 'reset'),
     onClicks=(
-        lambda: play_search(),
-        lambda: toggle_pause(),
+        play_search,
+        toggle_pause,
         lambda: searchManager.search(algo_dropdown.getSelected()),
-        lambda: reset()
+        reset
     )
 )
 
