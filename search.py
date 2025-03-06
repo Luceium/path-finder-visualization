@@ -44,15 +44,18 @@ class SearchManager:
     
     def reset_grid(self):
         self.grid = [[self.grid[x][y] if self.grid[x][y] != GridState.SEEN else GridState.UNEXPLORED for y in range(self.size)] for x in range(self.size)]
+        # reset the last seen (important if the goal was not reached)
+        last_x, last_y = self.last_explored
+        self.grid[last_x][last_y] = GridState.UNEXPLORED        
         # reset state of goal incase it was reached
         goal_x, goal_y = self.goal_pos
         self.grid[goal_x][goal_y] = GridState.GOAL
+        # NOTE: If the last explored was the goal, the goal will still be properly colored
+        # because we set the goal after
 
     def reset(self):
         # reset all state vars
         self.reset_grid()
-        self.goal_pos = None
-        self.start_pos = None
         self.path_started = False
         self.last_explored = None
         self.finished = False
