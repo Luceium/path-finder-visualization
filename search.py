@@ -257,4 +257,36 @@ class SearchManager:
         goal_x, goal_y = self.goal_pos
         return ((goal_x-cur_x)**2+(goal_y-cur_y)**2)**0.5
 
+# Add a method to run algorithm to completion for analysis
+    def run_algorithm_to_completion(self, algo: Algorithm):
+        """
+        Run an algorithm to completion and return the number of cells visited
+        """
+        # Reset everything first
+        self.reset()
+        
+        # Keep searching until finished or no more cells to explore
+        steps = 0
+        max_steps = self.size ** 2 * 2  # Avoid infinite loops
+        
+        while not self.finished and steps < max_steps:
+            self.search(algo)
+            steps += 1
+            
+            # If no progress can be made (no more cells to explore)
+            if steps > 0 and not self.path_started:
+                break
+        
+        # Return the metrics
+        path_length = 0
+        if self.finished:
+            path_length = self.pathLength(self.goal_pos)
+            
+        return {
+            "algorithm": algo.value,
+            "cells_visited": self.cells_visited,
+            "path_length": path_length,
+            "goal_reached": self.finished
+        }
+
 

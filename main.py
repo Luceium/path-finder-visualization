@@ -7,6 +7,10 @@ from pygame_widgets.button import ButtonArray
 import threading
 import os
 import csv
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 # Constants
 SCREEN_SIZE = 1005
@@ -148,22 +152,84 @@ def reset():
         play_thread = None
     searchManager.reset()
 
+def run_analysis():
+    """
+    Run all algorithms and compare their performance.
+    Captures the number of cells visited and path length for each algorithm.
+    """
+    algorithms = [Algorithm.BFS, Algorithm.DFS, Algorithm.GREEDY_BFS, Algorithm.A_STAR]
+    results = []
+     
+    for algo in algorithms:
+        searchManager.reset()
+        
+        # Run algorithm and collect results
+        result = searchManager.run_algorithm_to_completion(algo)
+        results.append(result)
+        print(f"{algo.value}: Visited {result['cells_visited']} cells, Path length: {result['path_length']}")
+    
+    visualize_results(results)
+
+def visualize_results(results):
+    """
+    Create a matplotlib visualization of algorithm performance
+    """
+    # Extract data for plotting
+    algorithm_names = [result['algorithm'] for result in results]
+    cells_visited = [result['cells_visited'] for result in results]
+    path_lengths = [result['path_length'] for result in results]
+    
+    # Create bar chart
+    x = np.arange(len(algorithm_names))
+    width = 0.35
+    
+    fig, ax = plt.subplots(figsize=(12,8))
+    rects1 = ax.bar(x - width/2, cells_visited, width, label='Cells Visited')
+    rects2 = ax.bar(x + width/2, path_lengths, width, label='Path Length')
+    
+    # Add labels and formatting
+    ax.set_title('Algorithm Performance Comparison')
+    ax.set_xlabel('Algorithm')
+    ax.set_ylabel('Count')
+    ax.set_xticks(x)
+    ax.set_xticklabels(algorithm_names)
+    ax.legend()
+    
+    # Add data labels on bars
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate(f'{height}',
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+    
+    autolabel(rects1)
+    autolabel(rects2)
+    
+    # Display the plot
+    plt.tight_layout()
+    plt.savefig('algorithm_analysis.png')
+    plt.show()
+
 simulation_control_buttons = ButtonArray(
-    screen, 230, 10, 250, 50, (5,1), border=0,
-    texts=('play', 'pause', 'next', 'reset', 'save'),
+    screen, 230, 10, 300, 50, (6,1), border=0,
+    texts=('play', 'pause', 'next', 'reset', 'save', 'analyze'),
     onClicks=(
         lambda: play_search(),
         lambda: toggle_pause(),
         lambda: searchManager.search(algo_dropdown.getSelected()),
         lambda: reset(),
-        lambda: save_maze(searchManager.grid)
+        lambda: save_maze(searchManager.grid),
+        lambda: run_analysis()
     )
 )
 
 def pos_on_button(pos):
     dropdown_open = algo_dropdown.isDropped() or edit_mode_dropdown.isDropped()
     y_in_range = 10 <= pos[1] <= 60
-    x_in_range = 10 <= pos[0] <= 110 or 120 <= pos[0] <= 220 or 230 <= pos[0] <= 480
+    x_in_range = 10 <= pos[0] <= 110 or 120 <= pos[0] <= 220 or 230 <= pos[0] <= 530
     return dropdown_open or (y_in_range and x_in_range)
 
 while running:
