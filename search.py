@@ -29,8 +29,8 @@ class SearchManager:
         self.last_explored = None
         self.finished = False
 
-    def search(self, impl: Algorithm):
-        match impl:
+    def search(self, algo: Algorithm):
+        match algo:
             case Algorithm.BFS:
                 self.bfs()
             case Algorithm.DFS:
@@ -97,21 +97,23 @@ class SearchManager:
         Breadth First Search
         Searches all paths at the same time, expanding each equally.
         """
-        if not self.explore_next(self.bfs_queue, lambda: self.bfs_queue.popleft()):
-            return
-
-        self.add_neighbors(self.bfs_queue, lambda current: self.bfs_queue.append(current))
+        self.search_impl(
+            self.bfs_queue,
+            lambda: self.bfs_queue.popleft(),
+            lambda current: self.bfs_queue.append(current)
+        )
 
     def dfs(self):
         """
         Depth First Search
         Searches one path at a time, completely exploring a path and all it's subpaths before moving on to a new path.
         """
-        #Note - path seems a bit buggy
-        if not self.explore_next(self.dfs_stack, lambda: self.dfs_stack.pop()):
-            return
-
-        self.add_neighbors(self.dfs_stack, lambda current: self.dfs_stack.append(current), self.dfs_handle_existing_neighbor)
+        self.search_impl(
+            self.dfs_stack,
+            lambda: self.dfs_stack.pop(),
+            lambda current: self.dfs_stack.append(current),
+            self.dfs_handle_existing_neighbor
+        )
     
     def dfs_handle_existing_neighbor(self, current):
         """
@@ -139,27 +141,29 @@ class SearchManager:
         Searches based on the cost so far to a node + the heuristic cost estimate remaining.
         Combines the best of uninformed searches and informed searches.
         """
-        if not self.explore_next(self.a_star_queue, lambda: heapq.heappop(self.a_star_queue)[1]):
-            return
-
-        self.add_neighbors(self.a_star_queue, lambda current: heapq.heappush(self.a_star_queue, (self.heuristic(current) + self.pathLength(self.last_explored), current)))
-
+        self.search_impl(
+            self.a_star_queue,
+            lambda: heapq.heappop(self.a_star_queue)[1],
+            lambda current: heapq.heappush(self.a_star_queue, (self.heuristic(current) + self.pathLength(self.last_explored), current))
+        )
+        
     def greedy_bfs(self):
         """
         Greedy Best First Search
         Greedily searches based on which node has the smallest heuristic cost to the goal.
         """
-        if not self.explore_next(self.greedy_bfs_queue, lambda: heapq.heappop(self.greedy_bfs_queue)[1]):
-            return
-        
-        self.add_neighbors(self.greedy_bfs_queue, lambda current: heapq.heappush(self.greedy_bfs_queue, (self.heuristic(current), current)))
+        self.search_impl(
+            self.greedy_bfs_queue,
+            lambda: heapq.heappop(self.greedy_bfs_queue)[1],
+            lambda current: heapq.heappush(self.greedy_bfs_queue, (self.heuristic(current), current))
+        )
 
     def beam(self, n):
         """
         Beam Search
         Explores the top n nodes at each step of the search and prunes all other nodes.
         """
-        return 5
+        pass
 
     # Algo Helper Functions
     def explore_next(self, data, get_next: Callable[[], tuple[int,int]]) -> bool:
@@ -220,11 +224,11 @@ class SearchManager:
                 else:
                     handleExistingNeighbor(current)
 
-    def search_impl(data, get_next: Callable[[], tuple[int,int]], add: Callable[[tuple[int,int]], None]):
+    def search_impl(self, data, get_next: Callable[[], tuple[int,int]], add: Callable[[tuple[int,int]], None], handleExistingNeighbor: Callable[[tuple[int,int]], None]=lambda current: None):
         if not self.explore_next(data, get_next):
             return
 
-        self.add_neighbors(data, add, self.last_explored)
+        self.add_neighbors(data, add, handleExistingNeighbor)
 
     def colorPath(self):
         """
