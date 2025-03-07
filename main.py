@@ -9,8 +9,8 @@ import os
 import csv
 
 # Constants
-SCREEN_SIZE = 1000
-GRID_SIZE = 15
+SCREEN_SIZE = 1005
+GRID_SIZE = 15 # NOTE: If you change this, any existing maze won't work
 CELL_SIZE = SCREEN_SIZE // GRID_SIZE
 WHITE = (255, 255, 255) # unvisited
 BLACK = (0, 0, 0)       # obstacles
