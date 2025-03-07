@@ -28,6 +28,7 @@ class SearchManager:
         self.path_started = False
         self.last_explored = None
         self.finished = False
+        self.cells_visited = 0
 
     def search(self, algo: Algorithm):
         match algo:
@@ -61,6 +62,7 @@ class SearchManager:
         self.path_started = False
         self.last_explored = None
         self.finished = False
+        self.cells_visited = 0
         self.bfs_queue = deque()
         self.greedy_bfs_queue = []
         heapq.heapify(self.greedy_bfs_queue)
@@ -184,9 +186,10 @@ class SearchManager:
             self.last_explored = get_next()
             x, y = self.last_explored
             self.grid[x][y].gridState = GridState.CURRENT
+            self.cells_visited += 1
 
             if self.last_explored == self.goal_pos:
-                print("GOAL")
+                print(f"GOAL REACHED! Cells visited: {self.cells_visited}")
                 self.colorPath()
                 self.finished = True
                 return False
