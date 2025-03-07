@@ -111,7 +111,26 @@ class SearchManager:
         if not self.explore_next(self.dfs_stack, lambda: self.dfs_stack.pop()):
             return
 
-        self.add_neighbors(self.dfs_stack, lambda current: self.dfs_stack.append(current))
+        self.add_neighbors(self.dfs_stack, lambda current: self.dfs_stack.append(current), self.dfs_handle_existing_neighbor)
+    
+    def dfs_handle_existing_neighbor(self, current):
+        """
+        Handles the case where a neighbor is already in the stack.
+        Using recursion there is no stack data structure to remove
+        the neighbor from so nodes can be seen as a next option but
+        later be explored by a different node.
+
+        In this case we'll move the neighbor to the end of the stack
+        to ensure it is explored right away.
+        """
+        # remove the current node from the stack
+        self.dfs_stack.remove(current)
+        # add it to the end of the stack
+        self.dfs_stack.append(current)
+        # set the ancestor to the last explored node
+        # this is important to ensure the path is correct
+        x, y = current
+        self.grid[x][y].ancestor = self.last_explored
 
     # Informed
     def a_star(self):
