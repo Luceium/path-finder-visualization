@@ -1,4 +1,4 @@
-from enums import Algorithm, GridState
+from enums import Algorithm, GridState, Cell
 from collections import deque
 import heapq
 from collections.abc import Callable
@@ -6,7 +6,7 @@ from collections.abc import Callable
 class SearchManager:
     def __init__(self, _size=10, _beam_size=3):
         self.size = _size
-        self.grid = [[GridState.UNEXPLORED for _ in range(self.size)] for _ in range(self.size)]
+        self.grid = [[Cell() for _ in range(self.size)] for _ in range(self.size)]
 
         # BFS
         self.bfs_queue = deque()
@@ -38,18 +38,20 @@ class SearchManager:
             case Algorithm.GREEDY_BFS:
                 self.greedy_bfs()
             case Algorithm.A_STAR:
-                pass
+                self.a_star()
             case Algorithm.BEAM:
-                pass
+                self.beam(self.beam_size)
     
     def reset_grid(self):
-        self.grid = [[self.grid[x][y] if self.grid[x][y] != GridState.SEEN else GridState.UNEXPLORED for y in range(self.size)] for x in range(self.size)]
+        self.grid = [[Cell(self.grid[x][y].gridState) if self.grid[x][y].gridState != GridState.SEEN and self.grid[x][y].gridState != GridState.PATH else Cell() for y in range(self.size)] for x in range(self.size)]
         # reset the last seen (important if the goal was not reached)
-        last_x, last_y = self.last_explored
-        self.grid[last_x][last_y] = GridState.UNEXPLORED        
+        if self.last_explored:
+            last_x, last_y = self.last_explored
+            self.grid[last_x][last_y] = Cell()        
         # reset state of goal incase it was reached
-        goal_x, goal_y = self.goal_pos
-        self.grid[goal_x][goal_y] = GridState.GOAL
+        if self.goal_pos:
+            goal_x, goal_y = self.goal_pos
+            self.grid[goal_x][goal_y] = Cell(GridState.GOAL)
         # NOTE: If the last explored was the goal, the goal will still be properly colored
         # because we set the goal after
 
@@ -72,9 +74,9 @@ class SearchManager:
     def set_goal(self, goal: tuple[int, int]):
         if self.goal_pos is not None:
             old_x, old_y = self.goal_pos
-            self.grid[old_x][old_y] = GridState.UNEXPLORED
+            self.grid[old_x][old_y].gridState = GridState.UNEXPLORED
         self.goal_pos = goal
-        self.grid[goal[0]][goal[1]] = GridState.GOAL
+        self.grid[goal[0]][goal[1]].gridState = GridState.GOAL
 
     def set_start(self, start: tuple[int, int]):
         # reset if anything has been explored
@@ -82,9 +84,9 @@ class SearchManager:
             self.reset()
         if self.start_pos is not None:
             old_x, old_y = self.start_pos
-            self.grid[old_x][old_y] = GridState.UNEXPLORED
+            self.grid[old_x][old_y].gridState = GridState.UNEXPLORED
         self.start_pos = start
-        self.grid[start[0]][start[1]] = GridState.START
+        self.grid[start[0]][start[1]].gridState = GridState.START
     
     # ALGO IMPLEMENTATIONS
     # NOTE: All functions will perform 1 step (explore one unit) to make the program intractable
@@ -118,7 +120,10 @@ class SearchManager:
         Searches based on the cost so far to a node + the heuristic cost estimate remaining.
         Combines the best of uninformed searches and informed searches.
         """
-        return 3
+        # if not self.explore_next(self.a_star_queue, lambda: heapq.heappop(self.a_star_queue)[1]):
+        #     return
+        # distance = #TODO
+        # self.add_neighbors(self.a_star_queue, lambda current: heapq.heappush(self.a_star_queue, (self.heuristic(current) + distance, current)))
 
     def greedy_bfs(self):
         """
@@ -148,36 +153,42 @@ class SearchManager:
             # Unset last seen
             if self.last_explored != self.start_pos:
                 x, y = self.last_explored
-                self.grid[x][y] = GridState.SEEN
+                self.grid[x][y].gridState = GridState.SEEN
 
             # Color and set new current
             if len(data) < 1:
                 return False# No solution found (May not be possible)
             self.last_explored = get_next()
             x, y = self.last_explored
-            self.grid[x][y] = GridState.CURRENT
+            self.grid[x][y].gridState = GridState.CURRENT
 
             if self.last_explored == self.goal_pos:
                 print("GOAL")
+                self.colorPath()
                 self.finished = True
                 return False
         
         # If the user adds obstacles after a cell has been added to the
         # data structure for next options to explore we need to skip that node.
         x, y = self.last_explored
-        if self.grid[x][y] == GridState.OBSTACLE:
+        if self.grid[x][y].gridState == GridState.OBSTACLE:
             return self.explore_next(data, get_next)
         
         return True
     
-    def add_neighbors(self, next_options, add: Callable[[tuple[int,int]], None]):
+    def add_neighbors(self, next_options, add: Callable[[tuple[int,int]], None], handleExistingNeighbor: Callable[[tuple[int,int]], None]=lambda current: None):
+        """
+        Abstracts the consistent steps of checking all neighbors and adding them to a data structure.
+        To be used in algorithms with vastly different search approaches, this function relies on callables to handle unique behavior.
+        NOTE: this assumes all neighbors are explored. Algorithms like beam search don't operate this way.
+        """
         x, y = self.last_explored
 
         for i,j in [(-1,0), (0,1), (1,0), (0,-1)]:
             current_x, current_y = x + i, y + j
             current = (current_x, current_y)
 
-            if 0 <= current_x < self.size and 0 <= current_y < self.size and (self.grid[current_x][current_y] == GridState.UNEXPLORED or self.grid[current_x][current_y] == GridState.GOAL):
+            if 0 <= current_x < self.size and 0 <= current_y < self.size and (self.grid[current_x][current_y].gridState == GridState.UNEXPLORED or self.grid[current_x][current_y].gridState == GridState.GOAL):
                 # check if cell is in queue
                 in_next = False
                 for cell in next_options:
@@ -186,6 +197,34 @@ class SearchManager:
                         break
                 if not in_next:
                     add(current)
+                    self.grid[current_x][current_y].ancestor = self.last_explored
+                else:
+                    handleExistingNeighbor(current)
+
+    def search_impl(data, get_next: Callable[[], tuple[int,int]], add: Callable[[tuple[int,int]], None]):
+        if not self.explore_next(data, get_next):
+            return
+
+        self.add_neighbors(data, add, self.last_explored)
+
+    def colorPath(self):
+        """
+        Colors in all the cells visited in the path that got to the goal.
+        """
+        cell_pos = self.grid[self.last_explored[0]][self.last_explored[1]].ancestor
+
+        while self.start_pos != cell_pos:
+            x, y = cell_pos
+            cell = self.grid[x][y]
+            cell.gridState = GridState.PATH
+            cell_pos = cell.ancestor
+
+    def pathLength(self,pos):
+        count = 0
+        while pos != self.start_pos:
+            count += 1
+            pos = self.grid[pos[0]][pos[1]].ancestor
+        return count
 
     def heuristic(self,pos):
         cur_x, cur_y = pos

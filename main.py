@@ -1,5 +1,5 @@
 from search import SearchManager
-from enums import GridState, EditMode, Algorithm
+from enums import GridState, EditMode, Algorithm, Cell
 import pygame
 import pygame_widgets
 from pygame_widgets.dropdown import Dropdown
@@ -16,12 +16,13 @@ GREEN = (0, 255, 0)     # start
 YELLOW = (255, 255, 0)  # goal
 GREY = (169, 169, 169)  # explored
 BLUE = (0, 0, 255)      # last visited cell
+PATH = (255, 0, 0)      # Color for path to goal
 
-def grid(state : list[list[GridState]]):
+def grid(state : list[list[Cell]]):
     for row in range(GRID_SIZE):
         for col in range(GRID_SIZE):
             rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
-            match state[row][col]:
+            match state[row][col].gridState:
                 case GridState.UNEXPLORED:
                     pygame.draw.rect(screen, WHITE, rect)
                 case GridState.SEEN:
@@ -34,6 +35,8 @@ def grid(state : list[list[GridState]]):
                     pygame.draw.rect(screen, YELLOW, rect)
                 case GridState.CURRENT:
                     pygame.draw.rect(screen, BLUE, rect)
+                case GridState.PATH:
+                    pygame.draw.rect(screen, PATH, rect)
             pygame.draw.rect(screen, (0, 0, 0), rect, 1)  # Grid line
         # print grid state for debugging
         # for row in state:
@@ -129,13 +132,13 @@ while running:
                     case EditMode.START:
                         searchManager.set_start((row, col))
                     case EditMode.GOAL:
-                        if searchManager.grid[row][col] == GridState.UNEXPLORED:
+                        if searchManager.grid[row][col].gridState == GridState.UNEXPLORED:
                             searchManager.set_goal((row, col))
                     case EditMode.OBSTACLES:
-                        if searchManager.grid[row][col] == GridState.UNEXPLORED:
-                            searchManager.grid[row][col] = GridState.OBSTACLE
-                        elif searchManager.grid[row][col] == GridState.OBSTACLE:
-                            searchManager.grid[row][col] = GridState.UNEXPLORED
+                        if searchManager.grid[row][col].gridState == GridState.UNEXPLORED:
+                            searchManager.grid[row][col].gridState = GridState.OBSTACLE
+                        elif searchManager.grid[row][col].gridState == GridState.OBSTACLE:
+                            searchManager.grid[row][col].gridState = GridState.UNEXPLORED
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("white")
