@@ -1,10 +1,52 @@
+"""
+Search Algorithm Implementation Module
+
+This module contains implementations of various pathfinding algorithms:
+- Breadth-First Search (BFS)
+- Depth-First Search (DFS)
+- Greedy Best-First Search
+- A* Search
+- Beam Search
+
+Each algorithm is implemented to work step-by-step for visualization purposes.
+"""
 from enums import Algorithm, GridState, Cell
 from collections import deque
 import heapq
 from collections.abc import Callable
 
 class SearchManager:
+    """
+    Manages grid state and pathfinding algorithm execution.
+    
+    This class handles the grid representation, algorithm selection and execution,
+    and maintains state for visualization purposes. It supports step-by-step
+    execution of algorithms to enable visual demonstration of how each algorithm works.
+    
+    Attributes:
+        size (int): The size of the grid (size x size).
+        grid (list): 2D grid of Cell objects representing the search space.
+        bfs_queue (deque): Queue used for BFS algorithm.
+        dfs_stack (list): Stack used for DFS algorithm.
+        a_star_queue (list): Priority queue used for A* algorithm.
+        greedy_bfs_queue (list): Priority queue used for Greedy BFS algorithm.
+        beam_size (int): Maximum number of paths to explore in Beam Search.
+        beam_queue (list): Priority queue used for Beam Search algorithm.
+        goal_pos (tuple): (x, y) coordinates of the goal position.
+        start_pos (tuple): (x, y) coordinates of the start position.
+        path_started (bool): Flag indicating if search has started.
+        last_explored (tuple): (x, y) coordinates of the last explored cell.
+        finished (bool): Flag indicating if search has finished.
+        cells_visited (int): Counter for number of cells visited during search.
+    """
     def __init__(self, _size=10, _beam_size=3):
+        """
+        Initialize the SearchManager with a grid and algorithm data structures.
+        
+        Args:
+            _size (int): Size of the grid (creates a _size x _size grid).
+            _beam_size (int): Number of paths to keep for beam search.
+        """
         self.size = _size
         self.grid = [[Cell() for _ in range(self.size)] for _ in range(self.size)]
 
@@ -31,6 +73,12 @@ class SearchManager:
         self.cells_visited = 0
 
     def search(self, algo: Algorithm):
+        """
+        Execute one step of the selected search algorithm.
+        
+        Args:
+            algo (Algorithm): The algorithm to use for search.
+        """
         match algo:
             case Algorithm.BFS:
                 self.bfs()
@@ -44,6 +92,12 @@ class SearchManager:
                 self.beam(self.beam_size)
     
     def reset_grid(self):
+        """
+        Reset the grid to its initial state while preserving obstacles, start, and goal.
+        
+        This method clears all search-related cell states (SEEN, PATH) but preserves the
+        obstacles, start, and goal positions.
+        """
         self.grid = [[Cell(self.grid[x][y].gridState) if self.grid[x][y].gridState != GridState.SEEN and self.grid[x][y].gridState != GridState.PATH else Cell() for y in range(self.size)] for x in range(self.size)]
         # reset the last seen (important if the goal was not reached)
         if self.last_explored:
@@ -57,6 +111,12 @@ class SearchManager:
         # because we set the goal after
 
     def reset(self):
+        """
+        Reset all search state variables and clear the grid visualization.
+        
+        Resets all algorithm data structures, path visualization, and counters
+        while preserving the maze layout.
+        """
         # reset all state vars
         self.reset_grid()
         self.path_started = False
@@ -74,6 +134,12 @@ class SearchManager:
 
 
     def set_goal(self, goal: tuple[int, int]):
+        """
+        Set the goal position on the grid.
+        
+        Args:
+            goal (tuple): (x, y) coordinates for the goal position.
+        """
         if self.goal_pos is not None:
             old_x, old_y = self.goal_pos
             self.grid[old_x][old_y].gridState = GridState.UNEXPLORED
@@ -81,6 +147,14 @@ class SearchManager:
         self.grid[goal[0]][goal[1]].gridState = GridState.GOAL
 
     def set_start(self, start: tuple[int, int]):
+        """
+        Set the start position on the grid.
+        
+        If a search is already in progress, it resets the search first.
+        
+        Args:
+            start (tuple): (x, y) coordinates for the start position.
+        """
         # reset if anything has been explored
         if self.path_started:
             self.reset()
@@ -96,8 +170,10 @@ class SearchManager:
     # Uninformed
     def bfs(self):
         """
-        Breadth First Search
-        Searches all paths at the same time, expanding each equally.
+        Breadth-First Search algorithm implementation.
+        
+        Searches all paths at the same time, expanding each path equally one step at a time.
+        This ensures the shortest path (in terms of steps) is found.
         """
         self.search_impl(
             self.bfs_queue,
@@ -107,8 +183,10 @@ class SearchManager:
 
     def dfs(self):
         """
-        Depth First Search
-        Searches one path at a time, completely exploring a path and all it's subpaths before moving on to a new path.
+        Depth-First Search algorithm implementation.
+        
+        Explores one path fully before backtracking to explore alternate paths.
+        May not find the shortest path, but can be more memory efficient than BFS.
         """
         self.search_impl(
             self.dfs_stack,
@@ -119,13 +197,13 @@ class SearchManager:
     
     def dfs_handle_existing_neighbor(self, current):
         """
-        Handles the case where a neighbor is already in the stack.
-        Using recursion there is no stack data structure to remove
-        the neighbor from so nodes can be seen as a next option but
-        later be explored by a different node.
-
-        In this case we'll move the neighbor to the end of the stack
-        to ensure it is explored right away.
+        Special handler for DFS to manage neighbors already in the stack.
+        
+        When DFS encounters a neighbor already in the stack, this method ensures
+        the path consistency by updating the ancestor relationship.
+        
+        Args:
+            current (tuple): (x, y) coordinates of the neighbor cell.
         """
         # remove the current node from the stack
         self.dfs_stack.remove(current)
@@ -139,9 +217,11 @@ class SearchManager:
     # Informed
     def a_star(self):
         """
-        A*
-        Searches based on the cost so far to a node + the heuristic cost estimate remaining.
-        Combines the best of uninformed searches and informed searches.
+        A* Search algorithm implementation.
+        
+        Combines path cost so far (like BFS) with a heuristic estimate of remaining
+        cost to the goal. This generally finds the optimal path while exploring fewer
+        nodes than BFS.
         """
         self.search_impl(
             self.a_star_queue,
@@ -151,8 +231,10 @@ class SearchManager:
         
     def greedy_bfs(self):
         """
-        Greedy Best First Search
-        Greedily searches based on which node has the smallest heuristic cost to the goal.
+        Greedy Best-First Search algorithm implementation.
+        
+        Prioritizes paths that appear to be closest to the goal according to a heuristic.
+        Fast but may not find the optimal path.
         """
         self.search_impl(
             self.greedy_bfs_queue,
@@ -162,13 +244,31 @@ class SearchManager:
 
     def beam(self, n):
         """
-        Beam Search
-        Explores the top n nodes at each step of the search and prunes all other nodes.
+        Beam Search algorithm implementation.
+        
+        Similar to breadth-first search but only keeps the best n paths at each step.
+        This limits memory usage but may miss the optimal solution.
+        
+        Args:
+            n (int): The beam width - number of paths to maintain at each step.
         """
         pass
 
     # Algo Helper Functions
     def explore_next(self, data, get_next: Callable[[], tuple[int,int]]) -> bool:
+        """
+        Helper function for exploring the next cell in a search algorithm.
+        
+        Handles common operations like updating the last explored cell, checking for
+        the goal, and advancing the search state.
+        
+        Args:
+            data: The data structure containing cells to explore (queue, stack, etc.)
+            get_next: Function that returns the next cell to explore from the data structure.
+            
+        Returns:
+            bool: True if search should continue, False if search is complete or impossible.
+        """
         if self.finished:
             return False
         if not self.path_started: # Start
@@ -182,7 +282,7 @@ class SearchManager:
 
             # Color and set new current
             if len(data) < 1:
-                return False# No solution found (May not be possible)
+                return False # No solution found (May not be possible)
             self.last_explored = get_next()
             x, y = self.last_explored
             self.grid[x][y].gridState = GridState.CURRENT
@@ -204,9 +304,16 @@ class SearchManager:
     
     def add_neighbors(self, next_options, add: Callable[[tuple[int,int]], None], handleExistingNeighbor: Callable[[tuple[int,int]], None]=lambda current: None):
         """
-        Abstracts the consistent steps of checking all neighbors and adding them to a data structure.
-        To be used in algorithms with vastly different search approaches, this function relies on callables to handle unique behavior.
-        NOTE: this assumes all neighbors are explored. Algorithms like beam search don't operate this way.
+        Add valid neighboring cells to the search data structure.
+        
+        Checks the four adjacent cells (up, right, down, left) and adds valid ones
+        to the data structure for future exploration.
+        NOTE: This assumes all neighbors are explored. Algorithms like beam search only search beam_size many neighbors.
+
+        Args:
+            next_options: Data structure containing cells to explore.
+            add: Function to add a cell to the data structure.
+            handleExistingNeighbor: Optional function to handle neighbors already in the data structure.
         """
         x, y = self.last_explored
 
@@ -228,6 +335,18 @@ class SearchManager:
                     handleExistingNeighbor(current)
 
     def search_impl(self, data, get_next: Callable[[], tuple[int,int]], add: Callable[[tuple[int,int]], None], handleExistingNeighbor: Callable[[tuple[int,int]], None]=lambda current: None):
+        """
+        Generic search implementation that can be configured for different algorithms.
+        
+        This is the core search function used by all the algorithms. It's customized
+        through function parameters to implement specific search behaviors.
+        
+        Args:
+            data: The data structure to use (queue, stack, heap, etc.)
+            get_next: Function to get the next cell from the data structure.
+            add: Function to add a cell to the data structure.
+            handleExistingNeighbor: Function to handle neighbors already in data structure.
+        """
         if not self.explore_next(data, get_next):
             return
 
@@ -235,7 +354,10 @@ class SearchManager:
 
     def colorPath(self):
         """
-        Colors in all the cells visited in the path that got to the goal.
+        Highlight the path from start to goal once goal is reached.
+        
+        Traces back from the goal to the start using ancestor pointers and
+        updates the cell state to PATH for visualization.
         """
         cell_pos = self.grid[self.last_explored[0]][self.last_explored[1]].ancestor
 
@@ -245,22 +367,49 @@ class SearchManager:
             cell.gridState = GridState.PATH
             cell_pos = cell.ancestor
 
-    def pathLength(self,pos):
+    def pathLength(self, pos):
+        """
+        Calculate the path length from the start to the given position.
+        
+        Args:
+            pos (tuple): (x, y) coordinates of the end position.
+            
+        Returns:
+            int: The number of steps in the path.
+        """
         count = 0
         while pos != self.start_pos:
             count += 1
             pos = self.grid[pos[0]][pos[1]].ancestor
         return count
 
-    def heuristic(self,pos):
+    def heuristic(self, pos):
+        """
+        Calculate a heuristic estimate of distance from position to goal.
+        
+        Uses Euclidean distance as the heuristic function.
+        
+        Args:
+            pos (tuple): (x, y) coordinates of the position.
+            
+        Returns:
+            float: The estimated distance to the goal.
+        """
         cur_x, cur_y = pos
         goal_x, goal_y = self.goal_pos
         return ((goal_x-cur_x)**2+(goal_y-cur_y)**2)**0.5
 
-# Add a method to run algorithm to completion for analysis
     def run_algorithm_to_completion(self, algo: Algorithm):
         """
-        Run an algorithm to completion and return the number of cells visited
+        Run a search algorithm until it reaches the goal or exhausts all options.
+        
+        Used for analysis to compare performance metrics of different algorithms.
+        
+        Args:
+            algo (Algorithm): The algorithm to run.
+            
+        Returns:
+            dict: Performance metrics including cells visited and path length.
         """
         # Reset everything first
         self.reset()
