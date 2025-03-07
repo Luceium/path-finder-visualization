@@ -139,10 +139,10 @@ class SearchManager:
         Searches based on the cost so far to a node + the heuristic cost estimate remaining.
         Combines the best of uninformed searches and informed searches.
         """
-        # if not self.explore_next(self.a_star_queue, lambda: heapq.heappop(self.a_star_queue)[1]):
-        #     return
-        # distance = #TODO
-        # self.add_neighbors(self.a_star_queue, lambda current: heapq.heappush(self.a_star_queue, (self.heuristic(current) + distance, current)))
+        if not self.explore_next(self.a_star_queue, lambda: heapq.heappop(self.a_star_queue)[1]):
+            return
+
+        self.add_neighbors(self.a_star_queue, lambda current: heapq.heappush(self.a_star_queue, (self.heuristic(current) + self.pathLength(self.last_explored), current)))
 
     def greedy_bfs(self):
         """

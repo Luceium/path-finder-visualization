@@ -82,7 +82,7 @@ def run_search():
     while not end_event.is_set() and not searchManager.finished:
         if not pause_event.is_set():
             searchManager.search(algo_dropdown.getSelected())
-            pygame.time.wait(500)
+            pygame.time.wait(250)
 
 def toggle_pause():
     if pause_event.is_set():
