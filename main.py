@@ -5,10 +5,12 @@ import pygame_widgets
 from pygame_widgets.dropdown import Dropdown
 from pygame_widgets.button import ButtonArray
 import threading
+import os
+import csv
 
 # Constants
 SCREEN_SIZE = 1000
-GRID_SIZE = 10
+GRID_SIZE = 15
 CELL_SIZE = SCREEN_SIZE // GRID_SIZE
 WHITE = (255, 255, 255) # unvisited
 BLACK = (0, 0, 0)       # obstacles
@@ -17,6 +19,42 @@ YELLOW = (255, 255, 0)  # goal
 GREY = (169, 169, 169)  # explored
 BLUE = (0, 0, 255)      # last visited cell
 PATH = (255, 0, 0)      # Color for path to goal
+MAZE_FILE_PATH = "maze.csv"
+
+# Save and load functions
+def save_maze(grid_state):
+    with open(MAZE_FILE_PATH, 'w', newline='') as f:
+        writer = csv.writer(f)
+        for row in grid_state:
+            # Convert enum to int values for storage
+            writer.writerow([cell.gridState.value for cell in row])
+    print(f"Maze saved to {MAZE_FILE_PATH}")
+
+def load_maze():
+    if not os.path.exists(MAZE_FILE_PATH):
+        return None
+    
+    try:
+        with open(MAZE_FILE_PATH, 'r', newline='') as f:
+            reader = csv.reader(f)
+            grid = []
+            for row in reader:
+                if not row:
+                    continue
+                grid_row = []
+                for cell in row:
+                    # Convert back from int to GridState enum
+                    grid_row.append(GridState(int(cell)))
+                grid.append(grid_row)
+            
+            # Validate grid dimensions
+            if len(grid) == GRID_SIZE and all(len(row) == GRID_SIZE for row in grid):
+                print(f"Maze loaded from {MAZE_FILE_PATH}")
+                return grid
+    except Exception as e:
+        print(f"Error loading maze: {e}")
+    
+    return None
 
 def grid(state : list[list[Cell]]):
     for row in range(GRID_SIZE):
@@ -41,7 +79,7 @@ def grid(state : list[list[Cell]]):
         # print grid state for debugging
         # for row in state:
         #     print(row)
-        # print()
+        # print()search
 
 # Set up pygame
 pygame.init()
@@ -50,9 +88,21 @@ pygame.display.set_caption("Interactable Pathfinding Visualizer")
 running = True
 
 # Set up search manager (manages grid and algorithms state)
-searchManager = SearchManager()
+searchManager = SearchManager(_size=GRID_SIZE)
 
-# Set up UI
+# Try to load maze from file
+saved_grid = load_maze()
+if saved_grid:
+    # Convert the loaded grid states to Cell objects
+    for r in range(GRID_SIZE):
+        for c in range(GRID_SIZE):
+            searchManager.grid[r][c] = Cell(saved_grid[r][c])
+            # Find start and goal positions
+            if saved_grid[r][c] == GridState.START:
+                searchManager.set_start((r, c))
+            elif saved_grid[r][c] == GridState.GOAL:
+                searchManager.set_goal((r, c))
+
 algo_dropdown = Dropdown(
     screen, 10, 10, 100, 50, name="Algorithms",
     choices=[algo.value for algo in Algorithm],
@@ -99,20 +149,21 @@ def reset():
     searchManager.reset()
 
 simulation_control_buttons = ButtonArray(
-    screen, 230, 10, 200, 50, (4,1), border=0,
-    texts=('play', 'pause', 'next', 'reset'),
+    screen, 230, 10, 250, 50, (5,1), border=0,
+    texts=('play', 'pause', 'next', 'reset', 'save'),
     onClicks=(
-        play_search,
-        toggle_pause,
+        lambda: play_search(),
+        lambda: toggle_pause(),
         lambda: searchManager.search(algo_dropdown.getSelected()),
-        reset
+        lambda: reset(),
+        lambda: save_maze(searchManager.grid)
     )
 )
 
 def pos_on_button(pos):
     dropdown_open = algo_dropdown.isDropped() or edit_mode_dropdown.isDropped()
     y_in_range = 10 <= pos[1] <= 60
-    x_in_range = 10 <= pos[0] <= 110 or 120 <= pos[0] <= 220 or 230 <= pos[0] <= 430
+    x_in_range = 10 <= pos[0] <= 110 or 120 <= pos[0] <= 220 or 230 <= pos[0] <= 480
     return dropdown_open or (y_in_range and x_in_range)
 
 while running:
